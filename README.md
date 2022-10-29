@@ -1,70 +1,201 @@
-# Getting Started with Create React App
+# React
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+```javascript
+import React from 'react';
+```
+Transforme le JSX
 
-## Available Scripts
 
-In the project directory, you can run:
+# Multiple State
 
-### `npm start`
+setState va non seulement updater le state mais aussi rerender le component
+Meme si j’ai 4 expense items repete 4 fois, chaque expense item a son propre state independant
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+You can have multiple states or only 1 state
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
 
-### `npm test`
+```javascript
+const [enteredTitle, setEnteredTitle]= useState('');
+const [enteredAmount, setEnteredAmount] = useState('');
+const [enteredDate, setEnteredDate] = useState('')
+```
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
 
-### `npm run build`
+```javascript
+const [userInput, setUserInput] = useState({
+    enteredTitle: '',
+    eneteredAmount:'',
+    enteredDate:''
+})
+```
+Multi state is more common
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+Then you combine them into 1 object : 
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+```javascript
+const submitHandler = (event) => {
+const expenseData = {
+    title: enteredTitle,
+    amount:enteredAmount,
+    date: new Date(enteredDate)
+}
+}
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+# Update State
 
-### `npm run eject`
+To update the state, this method is not good because , you depend on the previous state, and you are not sure you are getting the latest state because react schedule state updates , it doesn’t perform them instantly
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+```javascript
+const titleChangeHandler = (event) =>{
+setUserInput({
+    ...userInput,
+    enteredTitle: event.target.value,
+})
+}
+```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+You should do it like this :
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+```javascript
+const titleChangeHandler = (event) =>{
+setUserInput((prevState)=>{
+return {...prevState, enteredTitle:event.target.value}
+})
+}
+```
 
-## Learn More
+Here you receive the previous state
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+# Passer donness du child aud parent (lifting state up)
 
-### Code Splitting
+Passer des donnees du child component au parent component (or lifting state up) : parent component passe fonction to child component.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+Ici, ExpenseForm ou ExpenseFilter est  ce qu’on appelle un controlled component : un component qui passe data a son parent et recoit data de son parent en meme temps 
 
-### Analyzing the Bundle Size
+La value et la modification de value ne sont pas geres dans le component mais dans son parent
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
 
-### Making a Progressive Web App
+```javascript
+function App() {
+ 
+const addExpenseHandler =(expense) => {
+  console.log('in app js')
+  console.log(expense)
+}
+ 
+  return (
+    <div>
+      <NewExpense onAddExpense={addExpenseHandler}/>
+      <Expenses items={expenses}/>
+    </div>
+  );
+}
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+```
 
-### Advanced Configuration
+```javascript
+const NewExpense = (props) => {
+ 
+const saveExpenseDataHandler = (enteredExpenseData) =>{
+    const expenseData = {
+...enteredExpenseData,
+id: Math.random().toString()
+    }
+ 
+    props.onAddExpense(expenseData);
+}
+ 
+    return <div className='new-expense'>
+     <ExpenseForm onSaveExpenseData ={saveExpenseDataHandler} />
+    </div>
+};
+ 
+export default NewExpense;
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+```javascript
+import React , {useState} from 'react';
+import './ExpenseForm.css'
+ 
+const ExpenseForm = (props) => {
+ 
+const [enteredTitle, setEnteredTitle]= useState('');
+const [enteredAmount, setEnteredAmount] = useState('');
+const [enteredDate, setEnteredDate] = useState('')
+ 
+ 
+const titleChangeHandler = (event) =>{
+setEnteredTitle(event.target.value)
+}
+const amountChangeHandler = (event) => {
+setEnteredAmount(event.target.value);
+}
+ 
+const dateChangeHandler = (event) =>{
+    setEnteredDate(event.target.value);
+}
+ 
+const submitHandler = (event) => {
+ 
+    event.preventDefault();
+ 
+const expenseData = {
+    title: enteredTitle,
+    amount:enteredAmount,
+    date: new Date(enteredDate)
+}
+props.onSaveExpenseData(expenseData);
+ 
+setEnteredTitle('');
+setEnteredAmount('');
+setEnteredDate('');
+ 
+}
+ 
+return (
+    <form onSubmit={submitHandler}>
+ 
+<div className='new-expense__controls'>
+ 
+ 
+<div className='new-expense__control'>
+<label>Title</label>
+<input type="text" value={enteredTitle} onChange={titleChangeHandler}/>
+</div>
+ 
+ 
+<div className='new-expense__control'>
+<label>Amount</label>
+<input type="number" min="0.01" step="0.01" value={enteredAmount} onChange={amountChangeHandler}/>
+</div>
+ 
+<div className='new-expense__control'>
+<label>Date</label>
+<input type="date" min="2019-01-01" step="2022-12-31" value ={enteredDate}onChange={dateChangeHandler}/>
+</div>
+ 
+ 
+</div>
+ 
+ 
+<div className='new-expense__actions'>
+    <button type='submit'>Add Expense</button>
+</div>
+ 
+     </form>
+   )
+};
+ 
+export default ExpenseForm;
+ 
+ 
+<form></form>
+```
 
-### Deployment
+# Map
+Pour map function, ajouter key parce que si no key, dans une liste d’expense items, quand tu rajoute un element, ca va ecraser le premier element (pb si tu as un state a l’intereieur) puis ca va rajouter le reste a partir de ton array.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+Avec le key, ca va juste l’ajouter en haut sans remplacer aucun element.

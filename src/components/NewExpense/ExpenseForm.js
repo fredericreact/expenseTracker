@@ -1,3 +1,4 @@
+import { type } from '@testing-library/user-event/dist/type';
 import React , {useState} from 'react';
 import './ExpenseForm.css'
 
@@ -29,6 +30,8 @@ const expenseData = {
     date: new Date(enteredDate)
 }
 props.onSaveExpenseData(expenseData);
+
+
 
 setEnteredTitle('');
 setEnteredAmount('');
